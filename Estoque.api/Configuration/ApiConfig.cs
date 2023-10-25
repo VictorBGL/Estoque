@@ -10,7 +10,7 @@ namespace Estoque.Api.Configuration
 {
     public static class ApiConfig
     {
-        private const string ConnectionString = "server=127.0.0.1;database=rh_controle;uid=root;pwd=C$eZ1£485XCG;";
+        private const string ConnectionString = "server=127.0.0.1;database=estoque_controle;uid=root;pwd=C$eZ1£485XCG;";
 
         public static void AddApiConfig(this IServiceCollection services, IConfiguration configuration)
         {

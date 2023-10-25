@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Estoque.Api.Core.Controllers;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Estoque.Api.Controllers
 {
     [Route("api/auth")]
-    public class AuthController : MainController
+    //: MainController
+    public class AuthController 
     {
         //private IUsuarioService _usuarioService;
         //private IPasswordHasher<Usuario> _passwordHasher;
