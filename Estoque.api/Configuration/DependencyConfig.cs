@@ -11,7 +11,7 @@ namespace Estoque.Api.Configuration
         public static IServiceCollection AddDependencyConfig(this IServiceCollection services)
         {
             services.AddScoped(typeof(IService<>), typeof(Service<>));
-            //services.AddScoped<IClienteService, ClienteService>();
+            services.AddScoped<IUsuarioService, UsuarioService>();
 
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 

@@ -1,5 +1,6 @@
 ﻿using Estoque.Core.Entities;
 using Estoque.Core.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace Estoque.Domain.Services
 {
@@ -16,6 +17,11 @@ namespace Estoque.Domain.Services
             _usuarioRepository = repository;
         }
 
-      
+        public async Task<Usuario> BuscarUsuarioPorEmail(string email)
+        {
+          var usuario =  await _usuarioRepository.Table.FirstOrDefaultAsync(p => p.Email == email);
+
+            return usuario;
+        }
     }
 }

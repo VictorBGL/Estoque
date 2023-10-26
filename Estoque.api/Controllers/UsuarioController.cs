@@ -5,69 +5,188 @@ using Estoque.Core.Entities;
 using Estoque.Core.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace Estoque.Api.Controllers
 {
     [Route("api/usuario")] 
     public class UsuarioController : MainController
     {
-        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly UserManager<IdentityUser> _userManager;
+        //private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly IPasswordHasher<IdentityUser> _passwordHasher;
         private readonly IUsuarioService _usuarioService;
-        private readonly IAuthService _authService;
+        //private readonly IAuthService _authService;
         private readonly IMapper _mapper;
-        private readonly ILogger _logger;
+        //private readonly ILogger _logger;
         public UsuarioController(
             IUsuarioService service,
             IMapper mapper,
             INotifiable notifiable,
-            RoleManager<IdentityRole> roleManager,
-            IAuthService authService,
-            ILogger logger) : base(notifiable)
+            //RoleManager<IdentityRole> roleManager,
+            //IAuthService authService,
+            //ILogger logger,
+            UserManager<IdentityUser> userManager,
+            SignInManager<IdentityUser> signInManager,
+            IPasswordHasher<IdentityUser> passwordHasher) : base(notifiable)
         {
             _usuarioService = service;
-            _authService = authService;
-            _roleManager = roleManager;
+            //_authService = authService;
+            //_roleManager = roleManager;
             _mapper = mapper;
-            _logger = logger;
+            //_logger = logger;
+            _userManager = userManager;
+            _signInManager = signInManager;
+            _passwordHasher = passwordHasher;
         }
 
-        [HttpPost()]
+        [HttpPost("login")]
+        [ProducesResponseType(typeof(UsuarioLoginResponseModel), 200)]
         [Produces("application/json")]
-        [ProducesResponseType(typeof(OkModel), 200)]
-        [ProducesResponseType(typeof(BadRequestModel), 400)]
-        [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
-        public async Task<IActionResult> Insert([FromBody] UsuarioModel model)
+        public virtual async Task<IActionResult> LoginAsync([FromBody] LoginModel loginModel)
         {
             try
             {
-                var identityUserId = await _authService.CadastrarIdentityUserAsync(model.Email, model.Nome, "Ativo");
+                if (!ModelState.IsValid) return CustomResponse(ModelState);
 
-                if (identityUserId != Guid.Empty)
+                var usuario = await _usuarioService.BuscarUsuarioPorEmail(loginModel.Email);
+
+                if (usuario == null || !usuario.Ativo)
                 {
-                    //Cadastrar Usuario com seu perfil se tiver
-                    //await _usuarioService.InsertAsync(identityUserId, _mapper.Map<Usuario>(model), model.LojaId);
-
-                    if (!_notifiable.HasNotification)
+                    return Ok(new
                     {
-                        if (model.Ativo)
-                        {
-                            //var encodedToken = _authService.GerarTokenCriacaoSenha(model.Nome, identityUserId);
-                            //await _sendGridService.EnviarEmailCriacaoSenhaAsync(model.Email, model.Nome, encodedToken, identityUserId.ToString());
-                        }
+                        Authenticated = false,
+                        Message = "Falha ao autenticar, usuário inativo"
+                    });
+                }
+                
+                var identityUser = await _userManager.FindByIdAsync(usuario.Id.ToString());
 
-                        return CustomResponse();
-                    }
+                //await GerarSenha(identityUser, loginModel.Senha);
 
-                    await _authService.DeletarIdentityUserAsync(identityUserId);
+                if (identityUser == null)
+                {
+                    return Ok(new
+                    {
+                        Authenticated = false,
+                        Message = "Falha ao autenticar, usuário inativo"
+                    });
                 }
 
-                return CustomResponse();
+                var result = await _signInManager.PasswordSignInAsync(identityUser.Email, loginModel.Senha, true, true);
+
+                if (result.Succeeded)
+                {
+                    var guid = Guid.Parse(identityUser.Id);
+
+                    var tokenResponse = await GerarJwt(identityUser.Email);
+                    return Ok(tokenResponse);
+                }
+                else
+                {
+                    return Ok(new
+                    {
+                        Authenticated = false,
+                        Message = "Falha ao autenticar, credenciais inválidas"
+                    });
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Erro: {ex.Message}", ex);
-                return InternalServerError($"Erro: {ex.Message}");
+                return InternalServerError(ex);
             }
         }
+
+        private async Task<string> GerarSenha(IdentityUser usuario, string senha)
+        {
+            var hash = _passwordHasher.HashPassword(usuario, senha);
+            usuario.SecurityStamp = Guid.NewGuid().ToString();
+            usuario.PasswordHash = hash;
+            await _userManager.UpdateAsync(usuario);
+
+            return await Task.FromResult(hash);
+        }
+
+        private async Task<UsuarioLoginResponseModel> GerarJwt(string email)
+        {
+            var identityUser = await _userManager.FindByNameAsync(email);
+            var claims = await _userManager.GetClaimsAsync(identityUser);
+            var userRoles = await _userManager.GetRolesAsync(identityUser);
+
+            var usuario = await _usuarioService.BuscarUsuarioPorEmail(email);
+
+            var identityClaims = await ObterClaimsUsuario(userRoles, claims, identityUser, usuario);
+            var encodedToken = CodificarToken(identityClaims);
+
+            return ObterRespostaToken(encodedToken, usuario, claims);
+        }
+
+        private string CodificarToken(ClaimsIdentity identityClaims)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes("MecSecretTd2Familia");
+            var token = tokenHandler.CreateToken(new SecurityTokenDescriptor
+            {
+                Issuer = "Victor",
+                Audience = "https://localhost",
+                Subject = identityClaims,
+                Expires = DateTime.UtcNow.AddHours(24),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            });
+
+            return tokenHandler.WriteToken(token);
+        }
+
+        private UsuarioLoginResponseModel ObterRespostaToken(string encodedToken, Usuario usuario, IEnumerable<Claim> claims)
+        {
+            return new UsuarioLoginResponseModel
+            {
+                Authenticated = true,
+                AccessToken = encodedToken,
+                ExpiresIn = TimeSpan.FromHours(24).TotalHours,
+                UsuarioToken = new UsuarioToken
+                {
+                    Id = usuario.Id.ToString(),
+                    Email = usuario.Email,
+                    Nome = usuario.Nome,
+                }
+            };
+        }
+
+        private async Task<ClaimsIdentity> ObterClaimsUsuario(IList<string>? roles, ICollection<Claim> claims, IdentityUser user, Usuario? usuario)
+        {
+            claims.Add(new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()));
+            claims.Add(new Claim(JwtRegisteredClaimNames.Email, user.Email));
+            claims.Add(new Claim(JwtRegisteredClaimNames.Name, usuario.Nome));
+            claims.Add(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
+            claims.Add(new Claim(JwtRegisteredClaimNames.Nbf, ToUnixEpochDate(DateTime.UtcNow).ToString()));
+            claims.Add(new Claim(JwtRegisteredClaimNames.Iat, ToUnixEpochDate(DateTime.UtcNow).ToString(), ClaimValueTypes.Integer64));
+            claims.Add(new Claim(JwtRegisteredClaimNames.Exp, ToUnixEpochDate(DateTime.UtcNow.AddHours(24)).ToString(), ClaimValueTypes.Integer64));
+
+            foreach (var userRole in roles)
+            {
+                claims.Add(new Claim("role", userRole));
+
+                //var roleDb = await _roleManager.FindByNameAsync(userRole);
+                //var roleClaims = await _roleManager.GetClaimsAsync(roleDb);
+
+                //foreach (var roleClaim in roleClaims)
+                //{
+                //    claims.Add(roleClaim);
+                //}
+            }
+
+            var identityClaims = new ClaimsIdentity();
+            identityClaims.AddClaims(claims);
+
+            return await Task.FromResult(identityClaims);
+        }
+
+        private static long ToUnixEpochDate(DateTime date)
+            => (long)Math.Round((date.ToUniversalTime() - new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero)).TotalSeconds);
     }
 }
