@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using Estoque.Api.Core.Models;
+using Estoque.Core.Entities;
 using TimeZoneConverter;
 
 namespace Estoque.Api.Configuration
@@ -18,9 +20,9 @@ namespace Estoque.Api.Configuration
     {
         public ControleMapperConfig()
         {
-            //CreateMap<EmpresaModel, Ace.Core.Entities.Empresa>()
-            //    .ForMember(p => p.Endereco, opt => opt.MapFrom(x => new Endereco(x.Cep, x.Endereco, x.Bairro, x.Cidade, x.Uf)))
-            //    .ForMember(p => p.Status, opt => opt.MapFrom(x => x.StatusEmpresa));
+            CreateMap<ProdutoModel, Produto>();
+
+            CreateMap<Produto, ProdutoResponseModel>();
         }
     }
 

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Estoque.Api.Controllers
@@ -20,25 +21,19 @@ namespace Estoque.Api.Controllers
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly IPasswordHasher<IdentityUser> _passwordHasher;
         private readonly IUsuarioService _usuarioService;
-        //private readonly IAuthService _authService;
         private readonly IMapper _mapper;
-        //private readonly ILogger _logger;
         public UsuarioController(
             IUsuarioService service,
             IMapper mapper,
             INotifiable notifiable,
             //RoleManager<IdentityRole> roleManager,
-            //IAuthService authService,
-            //ILogger logger,
             UserManager<IdentityUser> userManager,
             SignInManager<IdentityUser> signInManager,
             IPasswordHasher<IdentityUser> passwordHasher) : base(notifiable)
         {
             _usuarioService = service;
-            //_authService = authService;
             //_roleManager = roleManager;
             _mapper = mapper;
-            //_logger = logger;
             _userManager = userManager;
             _signInManager = signInManager;
             _passwordHasher = passwordHasher;
@@ -77,7 +72,7 @@ namespace Estoque.Api.Controllers
                     });
                 }
 
-                var result = await _signInManager.PasswordSignInAsync(identityUser.Email, loginModel.Senha, true, true);
+                var result = await _signInManager.PasswordSignInAsync(identityUser, loginModel.Senha, true, true);
 
                 if (result.Succeeded)
                 {
@@ -127,15 +122,22 @@ namespace Estoque.Api.Controllers
 
         private string CodificarToken(ClaimsIdentity identityClaims)
         {
+            byte[] keyBytes = new byte[32];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(keyBytes);
+            }
+
+
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes("MecSecretTd2Familia");
+            //var key = Encoding.ASCII.GetBytes("MecSecretTd2Familia");
             var token = tokenHandler.CreateToken(new SecurityTokenDescriptor
             {
                 Issuer = "Victor",
                 Audience = "https://localhost",
                 Subject = identityClaims,
                 Expires = DateTime.UtcNow.AddHours(24),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(keyBytes), SecurityAlgorithms.HmacSha256Signature)
             });
 
             return tokenHandler.WriteToken(token);
