@@ -17,7 +17,7 @@ namespace Estoque.Api.Controllers
     public class UsuarioController : MainController
     {
         private readonly UserManager<IdentityUser> _userManager;
-        //private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly IPasswordHasher<IdentityUser> _passwordHasher;
         private readonly IUsuarioService _usuarioService;
@@ -26,13 +26,13 @@ namespace Estoque.Api.Controllers
             IUsuarioService service,
             IMapper mapper,
             INotifiable notifiable,
-            //RoleManager<IdentityRole> roleManager,
+            RoleManager<IdentityRole> roleManager,
             UserManager<IdentityUser> userManager,
             SignInManager<IdentityUser> signInManager,
             IPasswordHasher<IdentityUser> passwordHasher) : base(notifiable)
         {
             _usuarioService = service;
-            //_roleManager = roleManager;
+            _roleManager = roleManager;
             _mapper = mapper;
             _userManager = userManager;
             _signInManager = signInManager;
@@ -155,6 +155,7 @@ namespace Estoque.Api.Controllers
                     Id = usuario.Id.ToString(),
                     Email = usuario.Email,
                     Nome = usuario.Nome,
+                    Claims = claims.Select(c => new UsuarioClaim { Type = c.Type, Value = c.Value })
                 }
             };
         }
@@ -173,13 +174,13 @@ namespace Estoque.Api.Controllers
             {
                 claims.Add(new Claim("role", userRole));
 
-                //var roleDb = await _roleManager.FindByNameAsync(userRole);
-                //var roleClaims = await _roleManager.GetClaimsAsync(roleDb);
+                var roleDb = await _roleManager.FindByNameAsync(userRole);
+                var roleClaims = await _roleManager.GetClaimsAsync(roleDb);
 
-                //foreach (var roleClaim in roleClaims)
-                //{
-                //    claims.Add(roleClaim);
-                //}
+                foreach (var roleClaim in roleClaims)
+                {
+                    claims.Add(roleClaim);
+                }
             }
 
             var identityClaims = new ClaimsIdentity();

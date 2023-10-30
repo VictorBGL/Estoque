@@ -19,7 +19,7 @@ namespace Estoque.Api.Configuration
                 options.SuppressModelStateInvalidFilter = true;
             });
 
-            var conn = Environment.GetEnvironmentVariable("DB_CONN") ?? configuration.GetConnectionString("DefaultConnection");
+            //var conn = Environment.GetEnvironmentVariable("DB_CONN") ?? configuration.GetConnectionString("DefaultConnection");
 
             services.AddDbContext<Context>(o => o.UseMySQL(ConnectionString));
 
