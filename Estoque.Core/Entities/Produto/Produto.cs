@@ -44,6 +44,10 @@
             Imagem = entity.Imagem;
             DataAtualizacao = DateTime.Now;
         }
+        public void SetDataCriacao()
+        {
+            DataCriacao = DateTime.Now;
+        }
 
         public void AtualizarEstoque(decimal estoque)
         {

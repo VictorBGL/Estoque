@@ -21,8 +21,10 @@ namespace Estoque.Api.Configuration
         public ControleMapperConfig()
         {
             CreateMap<ProdutoModel, Produto>();
-
             CreateMap<Produto, ProdutoResponseModel>();
+
+            //CreateMap<PedidoVendaModel, PedidoVenda>();
+            CreateMap<PedidoVenda, PedidoVendaResponseModel>();
         }
     }
 

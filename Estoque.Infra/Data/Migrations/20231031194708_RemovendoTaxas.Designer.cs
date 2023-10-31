@@ -3,6 +3,7 @@ using System;
 using Estoque.Infra.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Estoque.Infra.Data.Migrations
 {
     [DbContext(typeof(Context))]
-    partial class ContextModelSnapshot : ModelSnapshot
+    [Migration("20231031194708_RemovendoTaxas")]
+    partial class RemovendoTaxas
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -169,12 +172,6 @@ namespace Estoque.Infra.Data.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("Valor")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("ValorAdicional")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("ValorDesconto")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("ValorPorQuantidade")
