@@ -23,7 +23,7 @@ namespace Estoque.Api.Configuration
             CreateMap<ProdutoModel, Produto>();
             CreateMap<Produto, ProdutoResponseModel>();
 
-            //CreateMap<PedidoVendaModel, PedidoVenda>();
+            CreateMap<PedidoVendaModel, PedidoVenda>();
             CreateMap<PedidoVenda, PedidoVendaResponseModel>();
         }
     }
