@@ -18,10 +18,10 @@ namespace Estoque.Domain.Services
             _produtoRepository = repository;
         }
 
-        public async Task<IEnumerable<Produto>> Filtrar(string? termo, string? direcaoOrdem, string? colunaOrdem)
+        public async Task<IEnumerable<Produto>> Filtrar(bool? ativo, string? termo, string? direcaoOrdem, string? colunaOrdem)
         {
             var produtos = _produtoRepository.Table
-                                                .Where(p => !p.Removido)
+                                                .Where(p => !p.Removido && (ativo == null || p.Ativo == ativo))
                                                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(termo))

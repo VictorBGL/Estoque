@@ -1,13 +1,16 @@
-﻿namespace Estoque.Api.Core.Models
+﻿using Estoque.Core.Entities;
+
+namespace Estoque.Api.Core.Models
 {
-    public class PedidoVendaProdutoModel
+    public class PedidoVendaProdutoResponseModel
     {
-        public Guid ProdutoId { get; set; }
+        public Guid Id { get; set; }
         public decimal Quantidade { get; set; }
         public decimal ValorPorQuantidade { get; set; }
         public decimal Valor { get; set; }
-        public decimal Descricao { get; set; }
         public decimal ValorDesconto { get; set; }
         public decimal ValorAdicional { get; set; }
+
+        public ProdutoResponseModel Produto { get; set; }
     }
 }

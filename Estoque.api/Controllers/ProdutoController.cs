@@ -32,7 +32,7 @@ namespace Estoque.api.Controllers
         {
             try
             {
-                var resultado = _mapper.Map<IEnumerable<ProdutoResponseModel>>(await _produtoService.Filtrar(model.Termo, model.DirecaoOrdem, model.ColunaOrdem));
+                var resultado = _mapper.Map<IEnumerable<ProdutoResponseModel>>(await _produtoService.Filtrar(model.Ativo, model.Termo, model.DirecaoOrdem, model.ColunaOrdem));
 
                 var resultadoPaginado = PaginacaoListModel<ProdutoResponseModel>.Create(resultado, paginacao.NumeroPagina, paginacao.TamanhoPagina);
 

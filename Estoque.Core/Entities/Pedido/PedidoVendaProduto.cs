@@ -5,7 +5,6 @@
         public decimal Quantidade { get; private set; }
         public decimal ValorPorQuantidade { get; private set; }
         public decimal Valor { get; private set; }
-        public decimal Descricao { get; private set; }
         public decimal ValorDesconto { get; private set; }
         public decimal ValorAdicional { get; private set; }
         public Guid ProdutoId { get; private set; }
