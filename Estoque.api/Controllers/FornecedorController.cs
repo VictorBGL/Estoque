@@ -3,40 +3,41 @@ using Estoque.Api.Core.Controllers;
 using Estoque.Api.Core.Models;
 using Estoque.Core.Entities;
 using Estoque.Core.Interfaces;
+using Estoque.Domain.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Estoque.api.Controllers
 {
-    [Route("api/produto")]
+    [Route("api/fornecedor")]
     [Authorize]
-    public class ProdutoController : MainController
+    public class FornecedorController : MainController
     {
-        private readonly IProdutoService _produtoService;
+        private readonly IFornecedorService _fornecedorService;
         private readonly IMapper _mapper;
         private readonly ILogger _logger;
-        public ProdutoController(
-            IProdutoService service,
+        public FornecedorController(
+            IFornecedorService service,
             IMapper mapper,
             INotifiable notifiable,
-            ILogger<ProdutoController> logger) : base(notifiable)
+            ILogger<FornecedorController> logger) : base(notifiable)
         {
-            _produtoService = service;
+            _fornecedorService = service;
             _mapper = mapper;
         }
 
         [HttpPost("filtro")]
-        [ProducesResponseType(typeof(IEnumerable<ProdutoResponseModel>), 200)]
+        [ProducesResponseType(typeof(IEnumerable<FornecedorResponseModel>), 200)]
         [ProducesResponseType(typeof(BadRequestModel), 400)]
         [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
         [Produces("application/json")]
-        public async Task<IActionResult> Filter([FromBody] ProdutoFilterModel model, [FromQuery] PaginacaoQueryStringModel paginacao)
+        public async Task<IActionResult> Filter([FromBody] FornecedorFilterModel model, [FromQuery] PaginacaoQueryStringModel paginacao)
         {
             try
             {
-                var resultado = _mapper.Map<IEnumerable<ProdutoResponseModel>>(await _produtoService.Filtrar(model.Ativo, model.Termo, model.DirecaoOrdem, model.ColunaOrdem));
+                var resultado = _mapper.Map<IEnumerable<FornecedorResponseModel>>(await _fornecedorService.Filtrar(model.Ativo, model.Termo, model.DirecaoOrdem, model.ColunaOrdem));
 
-                var resultadoPaginado = PaginacaoListModel<ProdutoResponseModel>.Create(resultado, paginacao.NumeroPagina, paginacao.TamanhoPagina);
+                var resultadoPaginado = PaginacaoListModel<FornecedorResponseModel>.Create(resultado, paginacao.NumeroPagina, paginacao.TamanhoPagina);
 
                 return PagingResponse(resultadoPaginado.NumeroPagina, resultadoPaginado.Total, resultadoPaginado.TotalPaginas, resultadoPaginado);
             }
@@ -48,19 +49,20 @@ namespace Estoque.api.Controllers
         }
 
         [HttpPost()]
-        [ProducesResponseType(typeof(ProdutoResponseModel), 200)]
+        [ProducesResponseType(typeof(OkModel), 200)]
         [ProducesResponseType(typeof(BadRequestModel), 400)]
         [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
         [Produces("application/json")]
-        public virtual async Task<IActionResult> Insert([FromBody] ProdutoModel model)
+        public virtual async Task<IActionResult> Insert([FromBody] FornecedorModel model)
         {
             try
             {
-                var produto = _mapper.Map<Produto>(model);
+                var fornecedor = _mapper.Map<Fornecedor>(model);
+                fornecedor.Cadastrar();
 
-                var resultado = _produtoService.Inserir(produto);
+                var resultado = await _fornecedorService.InsertAsync(fornecedor);
 
-                return CustomResponse(_mapper.Map<ProdutoResponseModel>(resultado.Result));
+                return CustomResponse(resultado);
             }
             catch (Exception ex)
             {
@@ -69,7 +71,7 @@ namespace Estoque.api.Controllers
         }
 
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(ProdutoResponseModel), 200)]
+        [ProducesResponseType(typeof(FornecedorResponseModel), 200)]
         [ProducesResponseType(typeof(BadRequestModel), 400)]
         [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
         [Produces("application/json")]
@@ -77,9 +79,9 @@ namespace Estoque.api.Controllers
         {
             try
             {
-                var resultado = _produtoService.BuscarPorId(id);
+                var resultado = await _fornecedorService.GetAsync(id);
 
-                return CustomResponse(_mapper.Map<ProdutoResponseModel>(resultado.Result));
+                return CustomResponse(_mapper.Map<FornecedorResponseModel>(resultado));
             }
             catch (Exception ex)
             {
@@ -88,19 +90,19 @@ namespace Estoque.api.Controllers
         }
 
         [HttpPut("{id}")]
-        [ProducesResponseType(typeof(ProdutoResponseModel), 200)]
+        [ProducesResponseType(typeof(OkModel), 200)]
         [ProducesResponseType(typeof(BadRequestModel), 400)]
         [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
         [Produces("application/json")]
-        public virtual async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] ProdutoModel model)
+        public virtual async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] FornecedorModel model)
         {
             try
             {
-                var produto = _mapper.Map<Produto>(model);
+                var produto = _mapper.Map<Fornecedor>(model);
 
-                var resultado = _produtoService.Atualizar(id, produto);
+                await _fornecedorService.UpdateAsync(id, produto);
 
-                return CustomResponse(_mapper.Map<ProdutoResponseModel>(resultado.Result));
+                return CustomResponse();
             }
             catch (Exception ex)
             {
@@ -117,7 +119,7 @@ namespace Estoque.api.Controllers
         {
             try
             {
-                await _produtoService.DeleteAsync(id);
+                await _fornecedorService.DeleteAsync(id);
 
                 return CustomResponse();
             }

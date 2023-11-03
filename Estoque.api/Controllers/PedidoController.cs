@@ -28,6 +28,8 @@ namespace Estoque.api.Controllers
 
         [HttpPost("venda/filtro")]
         [ProducesResponseType(typeof(IEnumerable<PedidoVendaResponseModel>), 200)]
+        [ProducesResponseType(typeof(BadRequestModel), 400)]
+        [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
         [Produces("application/json")]
         public async Task<IActionResult> Filter([FromBody] PedidoVendaFilterModel model, [FromQuery] PaginacaoQueryStringModel paginacao)
         {
@@ -48,6 +50,8 @@ namespace Estoque.api.Controllers
 
         [HttpPost("venda")]
         [ProducesResponseType(typeof(OkModel), 200)]
+        [ProducesResponseType(typeof(BadRequestModel), 400)]
+        [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
         [Produces("application/json")]
         public virtual async Task<IActionResult> Insert([FromBody] PedidoVendaModel model)
         {
@@ -67,6 +71,8 @@ namespace Estoque.api.Controllers
 
         [HttpGet("venda/{id}")]
         [ProducesResponseType(typeof(PedidoVendaResponseModel), 200)]
+        [ProducesResponseType(typeof(BadRequestModel), 400)]
+        [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
         [Produces("application/json")]
         public virtual async Task<IActionResult> GetId([FromRoute] Guid id)
         {
@@ -120,6 +126,8 @@ namespace Estoque.api.Controllers
 
         [HttpPost("compra/filtro")]
         [ProducesResponseType(typeof(IEnumerable<PedidoCompraResponseModel>), 200)]
+        [ProducesResponseType(typeof(BadRequestModel), 400)]
+        [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
         [Produces("application/json")]
         public async Task<IActionResult> FilterCompra([FromBody] PedidoCompraFilterModel model, [FromQuery] PaginacaoQueryStringModel paginacao)
         {
@@ -140,6 +148,8 @@ namespace Estoque.api.Controllers
 
         [HttpPost("compra")]
         [ProducesResponseType(typeof(OkModel), 200)]
+        [ProducesResponseType(typeof(BadRequestModel), 400)]
+        [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
         [Produces("application/json")]
         public virtual async Task<IActionResult> InsertCompra([FromBody] PedidoCompraModel model)
         {
@@ -159,6 +169,8 @@ namespace Estoque.api.Controllers
 
         [HttpGet("compra/{id}")]
         [ProducesResponseType(typeof(PedidoCompraResponseModel), 200)]
+        [ProducesResponseType(typeof(BadRequestModel), 400)]
+        [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
         [Produces("application/json")]
         public virtual async Task<IActionResult> GetCompraId([FromRoute] Guid id)
         {

@@ -14,6 +14,7 @@ namespace Estoque.Api.Configuration
             services.AddScoped<IUsuarioService, UsuarioService>();
             services.AddScoped<IProdutoService, ProdutoService>();
             services.AddScoped<IPedidoService, PedidoService>();
+            services.AddScoped<IFornecedorService, FornecedorService>();
 
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
