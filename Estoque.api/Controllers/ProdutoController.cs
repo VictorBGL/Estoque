@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Estoque.Api.Core.Controllers;
+using Estoque.Api.Core.Filters;
 using Estoque.Api.Core.Models;
 using Estoque.Core.Entities;
 using Estoque.Core.Interfaces;
@@ -52,6 +53,7 @@ namespace Estoque.api.Controllers
         [ProducesResponseType(typeof(BadRequestModel), 400)]
         [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
         [Produces("application/json")]
+        [ClaimsAuthorize("acesso", "financeiro")]
         public virtual async Task<IActionResult> Insert([FromBody] ProdutoModel model)
         {
             try
@@ -73,6 +75,7 @@ namespace Estoque.api.Controllers
         [ProducesResponseType(typeof(BadRequestModel), 400)]
         [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
         [Produces("application/json")]
+        [ClaimsAuthorize("acesso", "financeiro")]
         public virtual async Task<IActionResult> GetId([FromRoute] Guid id)
         {
             try
@@ -92,6 +95,7 @@ namespace Estoque.api.Controllers
         [ProducesResponseType(typeof(BadRequestModel), 400)]
         [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
         [Produces("application/json")]
+        [ClaimsAuthorize("acesso", "financeiro")]
         public virtual async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] ProdutoModel model)
         {
             try
@@ -113,6 +117,7 @@ namespace Estoque.api.Controllers
         [ProducesResponseType(typeof(BadRequestModel), 400)]
         [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
         [Produces("application/json")]
+        [ClaimsAuthorize("acesso", "financeiro")]
         public virtual async Task<IActionResult> Delete([FromRoute] Guid id)
         {
             try

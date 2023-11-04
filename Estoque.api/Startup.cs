@@ -30,6 +30,7 @@ namespace Estoque.Api
             services.AddSwaggerConfig();
             services.AddIdentityConfig(Configuration);
             services.AddApiConfig(Configuration);
+            services.AddSignalR(options => { options.EnableDetailedErrors = true; });
         }
 
         public void Configure(WebApplication app, IWebHostEnvironment env)

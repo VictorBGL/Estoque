@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Estoque.Api.Core.Controllers;
+using Estoque.Api.Core.Filters;
 using Estoque.Api.Core.Models;
 using Estoque.Core.Entities;
 using Estoque.Core.Interfaces;
@@ -27,10 +28,10 @@ namespace Estoque.api.Controllers
         }
 
         [HttpPost("venda/filtro")]
+        [Produces("application/json")]
         [ProducesResponseType(typeof(IEnumerable<PedidoVendaResponseModel>), 200)]
         [ProducesResponseType(typeof(BadRequestModel), 400)]
         [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
-        [Produces("application/json")]
         public async Task<IActionResult> Filter([FromBody] PedidoVendaFilterModel model, [FromQuery] PaginacaoQueryStringModel paginacao)
         {
             try
@@ -49,10 +50,11 @@ namespace Estoque.api.Controllers
         }
 
         [HttpPost("venda")]
+        [Produces("application/json")]
         [ProducesResponseType(typeof(OkModel), 200)]
         [ProducesResponseType(typeof(BadRequestModel), 400)]
         [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
-        [Produces("application/json")]
+        [ClaimsAuthorize("acesso", "vendedor")]
         public virtual async Task<IActionResult> Insert([FromBody] PedidoVendaModel model)
         {
             try
@@ -70,10 +72,11 @@ namespace Estoque.api.Controllers
         }
 
         [HttpGet("venda/{id}")]
+        [Produces("application/json")]
         [ProducesResponseType(typeof(PedidoVendaResponseModel), 200)]
         [ProducesResponseType(typeof(BadRequestModel), 400)]
         [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
-        [Produces("application/json")]
+        [ClaimsAuthorize("acesso", "vendedor")]
         public virtual async Task<IActionResult> GetId([FromRoute] Guid id)
         {
             try
@@ -88,47 +91,54 @@ namespace Estoque.api.Controllers
             }
         }
 
-        //[HttpPut("venda/{id}")]
-        //[ProducesResponseType(typeof(OkModel), 200)]
-        //[Produces("application/json")]
-        //public virtual async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] PedidoVendaModel model)
-        //{
-        //    try
-        //    {
-        //        var pedido = _mapper.Map<PedidoVenda>(model);
+        [HttpPut("venda/{id}")]
+        [Produces("application/json")]
+        [ProducesResponseType(typeof(OkModel), 200)]
+        [ProducesResponseType(typeof(BadRequestModel), 400)]
+        [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
+        [ClaimsAuthorize("acesso", "vendedor")]
+        public virtual async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] PedidoVendaModel model)
+        {
+            try
+            {
+                var pedido = _mapper.Map<PedidoVenda>(model);
 
-        //        await _pedidoService.UpdateAsync(id, pedido);
+                await _pedidoService.AtualizarVenda(id, pedido);
 
-        //        return CustomResponse();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return InternalServerError(ex);
-        //    }
-        //}
+                return CustomResponse();
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError(ex);
+            }
+        }
 
-        //[HttpDelete("venda/{id}")]
-        //[ProducesResponseType(typeof(OkModel), 200)]
-        //[Produces("application/json")]
-        //public virtual async Task<IActionResult> Delete([FromRoute] Guid id)
-        //{
-        //    try
-        //    {
-        //        await _pedidoService.DeleteAsync(id);
+        [HttpDelete("venda/{id}")]
+        [Produces("application/json")]
+        [ProducesResponseType(typeof(OkModel), 200)]
+        [ProducesResponseType(typeof(BadRequestModel), 400)]
+        [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
+        [ClaimsAuthorize("acesso", "vendedor")]
+        public virtual async Task<IActionResult> Delete([FromRoute] Guid id)
+        {
+            try
+            {
+                await _pedidoService.DeleteVendaAsync(id);
 
-        //        return CustomResponse();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return InternalServerError(ex);
-        //    }
-        //}
+                return CustomResponse();
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError(ex);
+            }
+        }
 
         [HttpPost("compra/filtro")]
+        [Produces("application/json")]
         [ProducesResponseType(typeof(IEnumerable<PedidoCompraResponseModel>), 200)]
         [ProducesResponseType(typeof(BadRequestModel), 400)]
         [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
-        [Produces("application/json")]
+        [ClaimsAuthorize("acesso", "financeiro")]
         public async Task<IActionResult> FilterCompra([FromBody] PedidoCompraFilterModel model, [FromQuery] PaginacaoQueryStringModel paginacao)
         {
             try
@@ -147,10 +157,11 @@ namespace Estoque.api.Controllers
         }
 
         [HttpPost("compra")]
+        [Produces("application/json")]
         [ProducesResponseType(typeof(OkModel), 200)]
         [ProducesResponseType(typeof(BadRequestModel), 400)]
         [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
-        [Produces("application/json")]
+        [ClaimsAuthorize("acesso", "financeiro")]
         public virtual async Task<IActionResult> InsertCompra([FromBody] PedidoCompraModel model)
         {
             try
@@ -168,10 +179,11 @@ namespace Estoque.api.Controllers
         }
 
         [HttpGet("compra/{id}")]
+        [Produces("application/json")]
         [ProducesResponseType(typeof(PedidoCompraResponseModel), 200)]
         [ProducesResponseType(typeof(BadRequestModel), 400)]
         [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
-        [Produces("application/json")]
+        [ClaimsAuthorize("acesso", "financeiro")]
         public virtual async Task<IActionResult> GetCompraId([FromRoute] Guid id)
         {
             try
@@ -186,40 +198,46 @@ namespace Estoque.api.Controllers
             }
         }
 
-        //[HttpPut("venda/{id}")]
-        //[ProducesResponseType(typeof(OkModel), 200)]
-        //[Produces("application/json")]
-        //public virtual async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] PedidoVendaModel model)
-        //{
-        //    try
-        //    {
-        //        var pedido = _mapper.Map<PedidoVenda>(model);
+        [HttpPut("compra/{id}")]
+        [Produces("application/json")]
+        [ProducesResponseType(typeof(OkModel), 200)]
+        [ProducesResponseType(typeof(BadRequestModel), 400)]
+        [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
+        [ClaimsAuthorize("acesso", "financeiro")]
+        public virtual async Task<IActionResult> UpdateCompra([FromRoute] Guid id, [FromBody] PedidoCompraModel model)
+        {
+            try
+            {
+                var pedido = _mapper.Map<PedidoCompra>(model);
 
-        //        await _pedidoService.UpdateAsync(id, pedido);
+                await _pedidoService.AtualizarCompra(id, pedido);
 
-        //        return CustomResponse();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return InternalServerError(ex);
-        //    }
-        //}
+                return CustomResponse();
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError(ex);
+            }
+        }
 
-        //[HttpDelete("venda/{id}")]
-        //[ProducesResponseType(typeof(OkModel), 200)]
-        //[Produces("application/json")]
-        //public virtual async Task<IActionResult> Delete([FromRoute] Guid id)
-        //{
-        //    try
-        //    {
-        //        await _pedidoService.DeleteAsync(id);
+        [HttpDelete("compra/{id}")]
+        [Produces("application/json")]
+        [ProducesResponseType(typeof(OkModel), 200)]
+        [ProducesResponseType(typeof(BadRequestModel), 400)]
+        [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
+        [ClaimsAuthorize("acesso", "financeiro")]
+        public virtual async Task<IActionResult> DeleteCompra([FromRoute] Guid id)
+        {
+            try
+            {
+                await _pedidoService.DeleteCompraAsync(id);
 
-        //        return CustomResponse();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return InternalServerError(ex);
-        //    }
-        //}
+                return CustomResponse();
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError(ex);
+            }
+        }
     }
 }

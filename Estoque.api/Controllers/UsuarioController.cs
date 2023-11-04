@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
 using Estoque.Api.Core.Controllers;
+using Estoque.Api.Core.Extensions;
 using Estoque.Api.Core.Models;
 using Estoque.Core.Entities;
 using Estoque.Core.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -22,6 +24,7 @@ namespace Estoque.Api.Controllers
         private readonly IPasswordHasher<IdentityUser> _passwordHasher;
         private readonly IUsuarioService _usuarioService;
         private readonly IMapper _mapper;
+        private readonly AppSettings _appSettings;
         public UsuarioController(
             IUsuarioService service,
             IMapper mapper,
@@ -29,8 +32,10 @@ namespace Estoque.Api.Controllers
             RoleManager<IdentityRole> roleManager,
             UserManager<IdentityUser> userManager,
             SignInManager<IdentityUser> signInManager,
+            IOptions<AppSettings> appSettings,
             IPasswordHasher<IdentityUser> passwordHasher) : base(notifiable)
         {
+            _appSettings = appSettings.Value;
             _usuarioService = service;
             _roleManager = roleManager;
             _mapper = mapper;
@@ -122,22 +127,35 @@ namespace Estoque.Api.Controllers
 
         private string CodificarToken(ClaimsIdentity identityClaims)
         {
-            byte[] keyBytes = new byte[32];
-            using (var rng = RandomNumberGenerator.Create())
-            {
-                rng.GetBytes(keyBytes);
-            }
+            //byte[] keyBytes = new byte[32];
+            //using (var rng = RandomNumberGenerator.Create())
+            //{
+            //    rng.GetBytes(keyBytes);
+            //}
 
+
+            //var tokenHandler = new JwtSecurityTokenHandler();
+            ////var key = Encoding.ASCII.GetBytes("MecSecretTd2Familia");
+            //var token = tokenHandler.CreateToken(new SecurityTokenDescriptor
+            //{
+            //    Issuer = "Victor",
+            //    Audience = "https://localhost",
+            //    Subject = identityClaims,
+            //    Expires = DateTime.UtcNow.AddHours(24),
+            //    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(keyBytes), SecurityAlgorithms.HmacSha256Signature)
+            //});
+
+            //return tokenHandler.WriteToken(token);
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            //var key = Encoding.ASCII.GetBytes("MecSecretTd2Familia");
+            var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
             var token = tokenHandler.CreateToken(new SecurityTokenDescriptor
             {
-                Issuer = "Victor",
-                Audience = "https://localhost",
+                Issuer = _appSettings.Emissor,
+                Audience = _appSettings.ValidoEm,
                 Subject = identityClaims,
-                Expires = DateTime.UtcNow.AddHours(24),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(keyBytes), SecurityAlgorithms.HmacSha256Signature)
+                Expires = DateTime.UtcNow.AddHours(_appSettings.ExpiracaoHoras),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             });
 
             return tokenHandler.WriteToken(token);
@@ -182,6 +200,8 @@ namespace Estoque.Api.Controllers
                     claims.Add(roleClaim);
                 }
             }
+
+            claims.Add(new Claim("acesso", usuario.Acesso));
 
             var identityClaims = new ClaimsIdentity();
             identityClaims.AddClaims(claims);

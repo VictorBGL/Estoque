@@ -1,11 +1,15 @@
 ﻿using Estoque.Api.Core.Controllers;
+using Estoque.Api.Core.Filters;
 using Estoque.Api.Core.Models;
+using Estoque.Core.DTOs;
 using Estoque.Core.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Estoque.api.Controllers
 {
     [Route("api/dashboard")]
+    [Authorize]
     public class DashboardController : MainController
     {
         private readonly ILogger _logger;
@@ -18,12 +22,17 @@ namespace Estoque.api.Controllers
         }
 
         [HttpPost("filtro")]
+        [ProducesResponseType(typeof(DashboardDTO), 200)]
+        [ProducesResponseType(typeof(BadRequestModel), 400)]
+        [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
+        [ClaimsAuthorize("acesso", "financeiro")]
         public async Task<IActionResult> BuscarDadosDashboard([FromBody] DashboardFilterModel model)
         {
             try
             {
-                //var resultado = await _dashboardService.BuscarDadosDashboard(model.DataInicio, model.DataFim);
-                return CustomResponse();
+                var resultado = await _dashboardService.BuscarDadosDashboard(model.VendedorId, model.DataInicio, model.DataFim);
+
+                return CustomResponse(resultado);
             }
             catch (Exception ex)
             {

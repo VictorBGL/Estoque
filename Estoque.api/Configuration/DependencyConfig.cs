@@ -3,6 +3,7 @@ using Estoque.Core.Interfaces;
 using Estoque.Domain.Notifications;
 using Estoque.Domain.Services;
 using Estoque.Infra.Data;
+using Estoque.Infra.Repositories;
 
 namespace Estoque.Api.Configuration
 {
@@ -15,8 +16,11 @@ namespace Estoque.Api.Configuration
             services.AddScoped<IProdutoService, ProdutoService>();
             services.AddScoped<IPedidoService, PedidoService>();
             services.AddScoped<IFornecedorService, FornecedorService>();
+            services.AddScoped<IDashboardService, DashboardService>();
 
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            services.AddScoped<IPedidoVendaRepository, PedidoVendaRepository>();
+            services.AddScoped<IPedidoCompraRepository, PedidoCompraRepository>();
 
             services.AddScoped<INotifiable, Notifiable>();
             

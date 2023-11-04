@@ -1,4 +1,6 @@
-﻿namespace Estoque.Core.Entities
+﻿using Microsoft.Graph.Models;
+
+namespace Estoque.Core.Entities
 {
     public abstract class EntityBase
     {

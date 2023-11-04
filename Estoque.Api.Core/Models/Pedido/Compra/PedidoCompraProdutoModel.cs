@@ -2,6 +2,7 @@
 {
     public class PedidoCompraProdutoModel
     {
+        public Guid? Id { get; set; }
         public decimal Quantidade { get; set; }
         public decimal ValorPorQuantidade { get; set; }
         public decimal Valor { get; set; }
