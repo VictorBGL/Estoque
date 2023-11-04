@@ -1,16 +1,17 @@
 ﻿using AutoMapper;
 using Estoque.Api.Core.Controllers;
 using Estoque.Api.Core.Extensions;
+using Estoque.Api.Core.Filters;
 using Estoque.Api.Core.Models;
 using Estoque.Core.Entities;
 using Estoque.Core.Interfaces;
+using Estoque.Domain.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace Estoque.Api.Controllers
@@ -45,8 +46,8 @@ namespace Estoque.Api.Controllers
         }
 
         [HttpPost("login")]
-        [ProducesResponseType(typeof(UsuarioLoginResponseModel), 200)]
         [Produces("application/json")]
+        [ProducesResponseType(typeof(UsuarioLoginResponseModel), 200)]
         public virtual async Task<IActionResult> LoginAsync([FromBody] LoginModel loginModel)
         {
             try
@@ -66,8 +67,6 @@ namespace Estoque.Api.Controllers
                 
                 var identityUser = await _userManager.FindByIdAsync(usuario.Id.ToString());
 
-                //await GerarSenha(identityUser, loginModel.Senha);
-
                 if (identityUser == null)
                 {
                     return Ok(new
@@ -81,9 +80,7 @@ namespace Estoque.Api.Controllers
 
                 if (result.Succeeded)
                 {
-                    var guid = Guid.Parse(identityUser.Id);
-
-                    var tokenResponse = await GerarJwt(identityUser.Email);
+                    var tokenResponse = await GerarJwt(identityUser.UserName);
                     return Ok(tokenResponse);
                 }
                 else
@@ -101,15 +98,151 @@ namespace Estoque.Api.Controllers
             }
         }
 
-        private async Task<string> GerarSenha(IdentityUser usuario, string senha)
+        [HttpPost("filtro")]
+        [Produces("application/json")]
+        [ProducesResponseType(typeof(IEnumerable<UsuarioResponseModel>), 200)]
+        [ProducesResponseType(typeof(BadRequestModel), 400)]
+        [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
+        [ClaimsAuthorize("acesso", "financeiro")]
+        public async Task<IActionResult> Filter([FromBody] UsuarioFilterModel model, [FromQuery] PaginacaoQueryStringModel paginacao)
         {
-            var hash = _passwordHasher.HashPassword(usuario, senha);
-            usuario.SecurityStamp = Guid.NewGuid().ToString();
-            usuario.PasswordHash = hash;
-            await _userManager.UpdateAsync(usuario);
+            try
+            {
+                var resultado = _mapper.Map<IEnumerable<UsuarioResponseModel>>(await _usuarioService.Filtrar(model.Ativo, model.Termo, model.DirecaoOrdem, model.ColunaOrdem));
 
-            return await Task.FromResult(hash);
+                var resultadoPaginado = PaginacaoListModel<UsuarioResponseModel>.Create(resultado, paginacao.NumeroPagina, paginacao.TamanhoPagina);
+
+                return PagingResponse(resultadoPaginado.NumeroPagina, resultadoPaginado.Total, resultadoPaginado.TotalPaginas, resultadoPaginado);
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError($"Erro: {ex.Message} {ex.InnerException?.Message}");
+            }
         }
+
+        [HttpPost()]
+        [Produces("application/json")]
+        [ProducesResponseType(typeof(OkModel), 200)]
+        [ProducesResponseType(typeof(BadRequestModel), 400)]
+        [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
+        [ClaimsAuthorize("acesso", "admin")]
+        public async Task<IActionResult> CriarConta([FromBody] UsuarioModel model)
+        {
+            var usuario = await _usuarioService.BuscarUsuarioPorEmail(model.Email.ToLower());
+
+            if (usuario != null)
+            {
+                _notifiable.AddNotification("Email já existente");
+                return BadRequest(new BadRequestModel(_notifiable.GetNotificationsAsObject));
+            }
+
+            if (string.IsNullOrEmpty(model.Nome) || string.IsNullOrEmpty(model.Email))
+            {
+                _notifiable.AddNotification("Dados do usuário não fornecidos");
+                return BadRequest(new BadRequestModel(_notifiable.GetNotificationsAsObject));
+            }
+
+            var identityUser = new IdentityUser(model.Email.ToLower());
+            identityUser.Email = model.Email.ToLower();
+            identityUser.NormalizedEmail = model.Email.ToUpper();
+
+            try
+            {
+                var result = await _userManager.CreateAsync(identityUser);
+
+                if (result.Succeeded)
+                {
+                    var novoUsuario = new Usuario(Guid.Parse(identityUser.Id), model.Nome, model.Telefone, model.Email.ToLower(), model.Acesso, true);
+
+                    await _usuarioService.CadastrarUsuario(novoUsuario);
+
+                    await GerarJwt(model.Email);
+
+                    var hash = _passwordHasher.HashPassword(identityUser, model.Senha);
+                    identityUser.SecurityStamp = Guid.NewGuid().ToString();
+                    identityUser.PasswordHash = hash;
+
+                    await _userManager.UpdateAsync(identityUser);
+
+                    return CustomResponse();
+                }
+
+                foreach (var error in result.Errors)
+                {
+                    _notifiable.AddNotification("Erro no registro", error.Description);
+                }
+
+                _notifiable.AddNotification("Erro no registro");
+                return BadRequest(new BadRequestModel(_notifiable.GetNotificationsAsObject));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new BadRequestModel(_notifiable.GetNotificationsAsObject));
+            }
+        }
+
+        [HttpPut("{id}")]
+        [Produces("application/json")]
+        [ProducesResponseType(typeof(OkModel), 200)]
+        [ProducesResponseType(typeof(BadRequestModel), 400)]
+        [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
+        [ClaimsAuthorize("acesso", "admin")]
+        public async Task<IActionResult> EditarConta([FromRoute] Guid id, [FromBody] UsuarioModel model)
+        {
+            if (string.IsNullOrEmpty(model.Nome) || string.IsNullOrEmpty(model.Email))
+            {
+                _notifiable.AddNotification("Dados do usuário não fornecidos");
+                return BadRequest(new BadRequestModel(_notifiable.GetNotificationsAsObject));
+            }
+
+            try
+            {
+                var usuario = _mapper.Map<Usuario>(model);
+
+                await _usuarioService.AtualizarUsuario(id, usuario);
+
+                await GerarJwt(model.Email);
+
+                var identityUser = await _userManager.FindByIdAsync(id.ToString());
+
+                if (model.Senha != null)
+                {
+                    var hash = _passwordHasher.HashPassword(identityUser, model.Senha);
+                    identityUser.SecurityStamp = Guid.NewGuid().ToString();
+                    identityUser.PasswordHash = hash;
+
+                    await _userManager.UpdateAsync(identityUser);
+                }
+
+                return CustomResponse();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new BadRequestModel(_notifiable.GetNotificationsAsObject));
+            }
+        }
+
+        [HttpDelete("{id}")]
+        [Produces("application/json")]
+        [ProducesResponseType(typeof(OkModel), 200)]
+        [ProducesResponseType(typeof(BadRequestModel), 400)]
+        [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
+        [ClaimsAuthorize("acesso", "admin")]
+        public virtual async Task<IActionResult> Delete([FromRoute] Guid id)
+        {
+            try
+            {
+                await _usuarioService.DeleteAsync(id);
+
+                return CustomResponse();
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError(ex);
+            }
+        }
+
+
 
         private async Task<UsuarioLoginResponseModel> GerarJwt(string email)
         {
@@ -119,7 +252,7 @@ namespace Estoque.Api.Controllers
 
             var usuario = await _usuarioService.BuscarUsuarioPorEmail(email);
 
-            var identityClaims = await ObterClaimsUsuario(userRoles, claims, identityUser, usuario);
+            var identityClaims = await ObterClaimsUsuario(userRoles, claims, usuario);
             var encodedToken = CodificarToken(identityClaims);
 
             return ObterRespostaToken(encodedToken, usuario, claims);
@@ -127,26 +260,6 @@ namespace Estoque.Api.Controllers
 
         private string CodificarToken(ClaimsIdentity identityClaims)
         {
-            //byte[] keyBytes = new byte[32];
-            //using (var rng = RandomNumberGenerator.Create())
-            //{
-            //    rng.GetBytes(keyBytes);
-            //}
-
-
-            //var tokenHandler = new JwtSecurityTokenHandler();
-            ////var key = Encoding.ASCII.GetBytes("MecSecretTd2Familia");
-            //var token = tokenHandler.CreateToken(new SecurityTokenDescriptor
-            //{
-            //    Issuer = "Victor",
-            //    Audience = "https://localhost",
-            //    Subject = identityClaims,
-            //    Expires = DateTime.UtcNow.AddHours(24),
-            //    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(keyBytes), SecurityAlgorithms.HmacSha256Signature)
-            //});
-
-            //return tokenHandler.WriteToken(token);
-
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
             var token = tokenHandler.CreateToken(new SecurityTokenDescriptor
@@ -178,10 +291,10 @@ namespace Estoque.Api.Controllers
             };
         }
 
-        private async Task<ClaimsIdentity> ObterClaimsUsuario(IList<string>? roles, ICollection<Claim> claims, IdentityUser user, Usuario? usuario)
+        private async Task<ClaimsIdentity> ObterClaimsUsuario(IList<string>? roles, ICollection<Claim> claims, Usuario? usuario)
         {
-            claims.Add(new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()));
-            claims.Add(new Claim(JwtRegisteredClaimNames.Email, user.Email));
+            claims.Add(new Claim(JwtRegisteredClaimNames.Sub, usuario.Id.ToString()));
+            claims.Add(new Claim(JwtRegisteredClaimNames.Email, usuario.Email));
             claims.Add(new Claim(JwtRegisteredClaimNames.Name, usuario.Nome));
             claims.Add(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
             claims.Add(new Claim(JwtRegisteredClaimNames.Nbf, ToUnixEpochDate(DateTime.UtcNow).ToString()));

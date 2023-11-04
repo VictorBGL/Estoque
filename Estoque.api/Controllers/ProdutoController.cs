@@ -27,10 +27,10 @@ namespace Estoque.api.Controllers
         }
 
         [HttpPost("filtro")]
+        [Produces("application/json")]
         [ProducesResponseType(typeof(IEnumerable<ProdutoResponseModel>), 200)]
         [ProducesResponseType(typeof(BadRequestModel), 400)]
         [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
-        [Produces("application/json")]
         public async Task<IActionResult> Filter([FromBody] ProdutoFilterModel model, [FromQuery] PaginacaoQueryStringModel paginacao)
         {
             try
@@ -49,10 +49,10 @@ namespace Estoque.api.Controllers
         }
 
         [HttpPost()]
+        [Produces("application/json")]
         [ProducesResponseType(typeof(ProdutoResponseModel), 200)]
         [ProducesResponseType(typeof(BadRequestModel), 400)]
         [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
-        [Produces("application/json")]
         [ClaimsAuthorize("acesso", "financeiro")]
         public virtual async Task<IActionResult> Insert([FromBody] ProdutoModel model)
         {
@@ -71,10 +71,10 @@ namespace Estoque.api.Controllers
         }
 
         [HttpGet("{id}")]
+        [Produces("application/json")]
         [ProducesResponseType(typeof(ProdutoResponseModel), 200)]
         [ProducesResponseType(typeof(BadRequestModel), 400)]
         [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
-        [Produces("application/json")]
         [ClaimsAuthorize("acesso", "financeiro")]
         public virtual async Task<IActionResult> GetId([FromRoute] Guid id)
         {
@@ -91,10 +91,10 @@ namespace Estoque.api.Controllers
         }
 
         [HttpPut("{id}")]
+        [Produces("application/json")]
         [ProducesResponseType(typeof(ProdutoResponseModel), 200)]
         [ProducesResponseType(typeof(BadRequestModel), 400)]
         [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
-        [Produces("application/json")]
         [ClaimsAuthorize("acesso", "financeiro")]
         public virtual async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] ProdutoModel model)
         {
@@ -113,10 +113,10 @@ namespace Estoque.api.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Produces("application/json")]
         [ProducesResponseType(typeof(OkModel), 200)]
         [ProducesResponseType(typeof(BadRequestModel), 400)]
         [ProducesResponseType(typeof(InternalServerErrorModel), 500)]
-        [Produces("application/json")]
         [ClaimsAuthorize("acesso", "financeiro")]
         public virtual async Task<IActionResult> Delete([FromRoute] Guid id)
         {

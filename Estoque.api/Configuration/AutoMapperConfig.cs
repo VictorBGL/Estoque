@@ -45,6 +45,10 @@ namespace Estoque.Api.Configuration
             //Fornecedor
             CreateMap<FornecedorModel, Fornecedor>();
             CreateMap<Fornecedor, FornecedorResponseModel>();
+
+            //Usuario
+            CreateMap<UsuarioModel, Usuario>();
+            CreateMap<Usuario, UsuarioResponseModel>();
         }
     }
 

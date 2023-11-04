@@ -2,8 +2,14 @@
 {
     public class Usuario : EntityBase
     {
-        public Usuario(string nome, string telefone, string email, string acesso, bool ativo)
+        protected Usuario()
         {
+
+        }
+
+        public Usuario(Guid id, string nome, string telefone, string email, string acesso, bool ativo)
+        {
+            Id = id;
             Nome = nome;
             Telefone = telefone;
             Email = email;
@@ -26,9 +32,10 @@
             Telefone = usuario.Telefone;
             Ativo = usuario.Ativo;
             Email = usuario.Email;
+            Acesso = usuario.Acesso;
         }
 
-        public void Deletar()
+        public void Remover()
         {
             Ativo = false;
         }

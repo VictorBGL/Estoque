@@ -6,6 +6,7 @@
         public DateTime Data { get; set; }
         public decimal ValorTotal { get; set; }
         public string? Observacao { get; set; }
+        public string FormaPagamento { get; set; }
         public Guid VendedorId { get; set; }
         public IEnumerable<PedidoVendaProdutoModel> Produtos { get; set; }
     }
