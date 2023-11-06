@@ -31,7 +31,6 @@ namespace Estoque.Domain.Hubs
             ReferenceLoopHandling = ReferenceLoopHandling.Ignore
         };
 
-
         public static async Task OnNovaCompra(this IHubContext<NotificacaoHub> hub, string mensagem)
         {
             var json = JsonConvert.SerializeObject(new { texto = mensagem }, _jsonSerializerSettings);

@@ -10,8 +10,6 @@ namespace Estoque.Api.Configuration
 {
     public static class ApiConfig
     {
-        private const string ConnectionString = "server=127.0.0.1;database=estoque_controle;uid=root;pwd=C$eZ1£485XCG;";
-
         public static void AddApiConfig(this IServiceCollection services, IConfiguration configuration)
         {
             services.Configure<ApiBehaviorOptions>(options =>
@@ -19,9 +17,9 @@ namespace Estoque.Api.Configuration
                 options.SuppressModelStateInvalidFilter = true;
             });
 
-            //var conn = Environment.GetEnvironmentVariable("DB_CONN") ?? configuration.GetConnectionString("DefaultConnection");
+            var conn = Environment.GetEnvironmentVariable("ConnectionStrings_DefaultConnection") ?? configuration.GetConnectionString("DefaultConnection");
 
-            services.AddDbContext<Context>(o => o.UseMySQL(ConnectionString));
+            services.AddDbContext<Context>(o => o.UseMySQL(conn));
 
             services.AddControllers()
                     .AddNewtonsoftJson(options =>
