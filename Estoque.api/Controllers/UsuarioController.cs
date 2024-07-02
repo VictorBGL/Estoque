@@ -116,6 +116,7 @@ namespace Estoque.Api.Controllers
             }
             catch (Exception ex)
             {
+
                 return InternalServerError($"Erro: {ex.Message} {ex.InnerException?.Message}");
             }
         }
